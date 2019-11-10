@@ -21,8 +21,8 @@ pub fn image_save(bytes: &[u8]) -> Result<String, ImageProcessError> {
     let file_name = format!("{}.png", Uuid::new_v4());
     let path = Path::new(&file_name);
     load_from_memory(&bytes)
-        .map_err(|e| ImageProcessError::ImageError(e))
-        .and_then(|file| file.save(path).map_err(|e| ImageProcessError::IOError(e)))
+        .map_err(ImageProcessError::ImageError)
+        .and_then(|file| file.save(path).map_err(ImageProcessError::IOError))
         .map(|_| file_name)
 }
 
@@ -52,7 +52,7 @@ pub fn image_url_save(
                         .and_then(|file_name| {
                             Ok(HttpResponse::Ok()
                                 .content_type("text/html")
-                                .body(format!("{}", file_name)))
+                                .body(file_name.to_string()))
                         })
                 })
         })
