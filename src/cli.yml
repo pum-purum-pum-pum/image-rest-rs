@@ -1,0 +1,10 @@
+name: myapp
+version: "1.0"
+author: Vlad Zhukov
+about: REST API for uploading images
+args:
+    - config:
+        short: p
+        long: port
+        help: Sets port number
+        takes_value: true

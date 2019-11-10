@@ -1,0 +1,57 @@
+use clap::{load_yaml, App as Clapp};
+
+use std::cell::Cell;
+
+use actix_web::{middleware, web, App, HttpResponse, HttpServer};
+use image_preview_request::image_preview;
+use json_request::image_json_save;
+use multipart_request::upload;
+use url_request::image_url_save;
+
+mod err;
+mod image_preview_request;
+mod json_request;
+mod multipart_request;
+#[cfg(test)]
+mod tests;
+mod url_request;
+
+pub const MAX_SIZE: usize = 262_144; // max payload size is 256k
+pub const MAX_IMAGE_SIZE: usize = 2 * 1024 * 1024;
+
+pub fn index() -> HttpResponse {
+    let html = include_str!("multipart.html");
+    HttpResponse::Ok().body(html)
+}
+
+fn url_form() -> HttpResponse {
+    let html = include_str!("upload_url.html");
+    HttpResponse::Ok().body(html)
+}
+
+fn main() -> std::io::Result<()> {
+    std::env::set_var("RUST_LOG", "actix_server=info,actix_web=info");
+    // env_logger::init();
+    let yaml = load_yaml!("cli.yml");
+    let matches = Clapp::from_yaml(yaml).get_matches();
+    let port = matches.value_of("port").unwrap_or("8080");
+    HttpServer::new(|| {
+        App::new()
+            .data(Cell::new(0usize))
+            .wrap(middleware::Logger::default())
+            .service(
+                web::resource("/")
+                    .route(web::get().to(index))
+                    .route(web::post().to_async(upload)),
+            )
+            .service(web::resource("/image_json").route(web::post().to_async(image_json_save)))
+            .service(
+                web::resource("/image_url")
+                    .route(web::get().to(url_form))
+                    .route(web::post().to_async(image_url_save)),
+            )
+            .service(web::resource("/image_preivew").route(web::get().to_async(image_preview)))
+    })
+    .bind(format!("127.0.0.1:{}", port))?
+    .run()
+}
