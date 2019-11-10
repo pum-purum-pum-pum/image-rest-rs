@@ -1,13 +1,12 @@
-use std::path::Path;
-use std::io::{Error as IOError, ErrorKind};
 use actix_web::{error, web, Error, HttpResponse};
+use std::io::{Error as IOError, ErrorKind};
+use std::path::Path;
 
 use crate::err::ImageProcessError;
 use futures::{Future, Stream};
 use image::{self, load_from_memory};
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ImageBase64 {
@@ -29,8 +28,7 @@ pub fn image_json_save(payload: web::Payload) -> impl Future<Item = HttpResponse
             // body is loaded, now we can deserialize serde-json
             web::block(move || {
                 let obj = serde_json::from_slice::<ImageBase64>(&body)?;
-                let bytes =
-                    base64::decode(&obj.content).map_err(ImageProcessError::DecodeError)?;
+                let bytes = base64::decode(&obj.content).map_err(ImageProcessError::DecodeError)?;
                 let file_name = format!("{}.png", Uuid::new_v4());
                 let path = Path::new(&file_name);
                 load_from_memory(&bytes)
