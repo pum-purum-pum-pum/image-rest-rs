@@ -26,17 +26,17 @@ pub struct UrlFormData {
 }
 
 pub fn index() -> HttpResponse {
-    let html = include_str!("multipart.html");
+    let html = include_str!("../html/multipart.html");
     HttpResponse::Ok().body(html)
 }
 
 fn url_form() -> HttpResponse {
-    let html = include_str!("upload_url.html");
+    let html = include_str!("../html/upload_url.html");
     HttpResponse::Ok().body(html)
 }
 
 fn preview_form() -> HttpResponse {
-    let html = include_str!("preview.html");
+    let html = include_str!("../html/preview.html");
     HttpResponse::Ok().body(html)
 }
 
