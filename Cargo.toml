@@ -1,7 +1,7 @@
 [package]
 name = "image_rest"
 version = "0.1.0"
-authors = ["vlad <vladzhukovtirko@gmail.com>"]
+authors = ["vlad"]
 edition = "2018"
 
 [dependencies]

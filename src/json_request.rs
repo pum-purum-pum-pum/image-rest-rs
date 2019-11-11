@@ -1,9 +1,8 @@
-use actix_web::{error, web, Error, HttpResponse};
-use std::io::{Error as IOError, ErrorKind};
+use actix_web::{web, Error, HttpResponse};
 use std::path::Path;
 
 use crate::err::ImageProcessError;
-use crate::JsonImageResponse;
+use crate::{minimize_image, JsonImageResponse};
 use futures::{Future, Stream};
 use image::{self, load_from_memory};
 use serde_derive::{Deserialize, Serialize};
@@ -27,18 +26,21 @@ pub fn image_json_save(payload: web::Payload) -> impl Future<Item = HttpResponse
                 let bytes = base64::decode(&obj.content).map_err(ImageProcessError::DecodeError)?;
                 let extension = obj.extension;
                 let file_name = format!("{}.{}", Uuid::new_v4(), extension);
+                let preview_file_name = format!("preview_{}.{}", Uuid::new_v4(), extension);
                 let path = Path::new(&file_name);
-                load_from_memory(&bytes)
-                    .map_err(ImageProcessError::ImageError)
-                    .and_then(|img| img.save(path).map_err(ImageProcessError::IOError))
-                    .map(|_| (file_name, body.len()))
-            })
-            .map_err(|e: error::BlockingError<ImageProcessError>| match e {
-                error::BlockingError::Error(e) => e,
-                error::BlockingError::Canceled => ImageProcessError::IOError(IOError::new(
-                    ErrorKind::Other,
-                    "saving operation canceled",
-                )),
+                let preview_path = Path::new(&preview_file_name);
+                let img = load_from_memory(&bytes).map_err(ImageProcessError::ImageError);
+                img.and_then(|img| {
+                    minimize_image(&img)
+                        .map_err(|e| ImageProcessError::ImageError(e))
+                        .and_then(|mini_img| {
+                            mini_img
+                                .save(preview_path)
+                                .map_err(ImageProcessError::IOError)
+                        })
+                        .and(img.save(path).map_err(ImageProcessError::IOError))
+                })
+                .map(|_| (file_name, body.len()))
             })
             .from_err()
         })
