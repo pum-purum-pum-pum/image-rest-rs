@@ -2,14 +2,13 @@ use actix_multipart::{Field, Multipart, MultipartError};
 use actix_web::{error, web, Error, HttpResponse};
 use futures::future::{err, Either};
 use futures::{Future, Stream};
-use std::cell::Cell;
 use std::ffi::OsStr;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
 use uuid::Uuid;
 
-pub fn save_file(field: Field) -> impl Future<Item = i64, Error = Error> {
+pub fn save_file(field: Field) -> impl Future<Item = (String, i64), Error = Error> {
     let extension = match field
         .content_disposition()
         .and_then(|content| content.get_filename().map(|s| s.to_string()))
@@ -26,25 +25,25 @@ pub fn save_file(field: Field) -> impl Future<Item = i64, Error = Error> {
         }
     };
     let file_path_string = format!("{}.{}", Uuid::new_v4(), extension);
-    let file = match fs::File::create(file_path_string) {
+    let file = match fs::File::create(file_path_string.clone()) {
         Ok(file) => file,
         Err(e) => return Either::A(err(error::ErrorInternalServerError(e))),
     };
     Either::B(
         field
-            .fold((file, 0i64), move |(mut file, mut acc), bytes| {
+            .fold((file, file_path_string.clone(), 0i64), move |(mut file, filename, mut acc), bytes| {
                 web::block(move || {
                     file.write_all(bytes.as_ref())
                         .map_err(|e| MultipartError::Payload(error::PayloadError::Io(e)))?;
                     acc += bytes.len() as i64;
-                    Ok((file, acc))
+                    Ok((file, filename, acc))
                 })
                 .map_err(|e: error::BlockingError<MultipartError>| match e {
                     error::BlockingError::Error(e) => e,
                     error::BlockingError::Canceled => MultipartError::Incomplete,
                 })
             })
-            .map(|(_, acc)| acc)
+            .map(|(_, filename, acc)| (filename, acc))
             .from_err(),
     )
 }
@@ -52,10 +51,7 @@ pub fn save_file(field: Field) -> impl Future<Item = i64, Error = Error> {
 /// upload multipart data and responce with a future stream of sizes
 pub fn upload(
     multipart: Multipart,
-    counter: web::Data<Cell<usize>>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    counter.set(counter.get() + 1);
-    println!("{:?}", counter.get());
 
     multipart
         .map(|field| save_file(field).into_stream())

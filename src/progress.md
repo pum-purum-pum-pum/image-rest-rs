@@ -1,5 +1,3 @@
-return filename from multipart
-
 replace url form data with path form data for preview
 
 save image also async?
