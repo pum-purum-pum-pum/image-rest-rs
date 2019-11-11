@@ -3,6 +3,7 @@ use std::io::{Error as IOError, ErrorKind};
 use std::path::Path;
 
 use crate::err::ImageProcessError;
+use crate::JsonImageResponse;
 use futures::{Future, Stream};
 use image::{self, load_from_memory};
 use serde_derive::{Deserialize, Serialize};
@@ -12,12 +13,6 @@ use uuid::Uuid;
 pub struct ImageBase64 {
     pub content: String,
     pub extension: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct JsonImageResponse {
-    pub name: String,
-    pub checksum: usize,
 }
 
 pub fn image_json_save(payload: web::Payload) -> impl Future<Item = HttpResponse, Error = Error> {
@@ -50,7 +45,7 @@ pub fn image_json_save(payload: web::Payload) -> impl Future<Item = HttpResponse
         .and_then(|(file_name, checksum)| {
             let response = JsonImageResponse {
                 name: file_name,
-                checksum,
+                checksum: checksum as u64,
             };
             Ok(HttpResponse::Ok().json(response))
         })

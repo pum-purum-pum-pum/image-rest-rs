@@ -1,7 +1,7 @@
 use crate::image_preview_request::image_preview;
 use crate::image_preview_request::FileNameFormData;
-use crate::json_request::{image_json_save, ImageBase64, JsonImageResponse};
-use crate::{index, url_form};
+use crate::json_request::{image_json_save, ImageBase64};
+use crate::{index, url_form, JsonImageResponse};
 use actix_web::http::StatusCode;
 use actix_web::{http::header, test, web, App};
 use bytes::Bytes;
@@ -54,7 +54,7 @@ fn json_request() {
         .to_request();
     let result = test::read_response(&mut app, req);
     let result = serde_json::from_slice::<JsonImageResponse>(&result).unwrap();
-    assert_eq!(result.checksum, PIXEL_BASE64.len());
+    assert_eq!(result.checksum as usize, PIXEL_BASE64.len());
 }
 
 #[test]

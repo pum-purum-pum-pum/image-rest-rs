@@ -25,6 +25,12 @@ pub struct UrlFormData {
     pub url: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct JsonImageResponse {
+    pub name: String,
+    pub checksum: u64,
+}
+
 pub fn index() -> HttpResponse {
     let html = include_str!("../html/multipart.html");
     HttpResponse::Ok().body(html)
