@@ -3,21 +3,29 @@ use actix_web::{error, web, Error, HttpResponse};
 use futures::future::{err, Either};
 use futures::{Future, Stream};
 use std::cell::Cell;
+use std::ffi::OsStr;
 use std::fs;
 use std::io::Write;
+use std::path::Path;
+use uuid::Uuid;
 
 pub fn save_file(field: Field) -> impl Future<Item = i64, Error = Error> {
-    let file_path_string = match field
+    let extension = match field
         .content_disposition()
         .and_then(|content| content.get_filename().map(|s| s.to_string()))
     {
-        Some(filename) => filename.replace(' ', "_"),
+        Some(filename) => Path::new(&filename)
+            .extension()
+            .and_then(OsStr::to_str)
+            .unwrap_or("png")
+            .to_string(),
         None => {
             return Either::A(err(error::ErrorInternalServerError(
                 "Couldn't read the filename.",
             )))
         }
     };
+    let file_path_string = format!("{}.{}", Uuid::new_v4(), extension);
     let file = match fs::File::create(file_path_string) {
         Ok(file) => file,
         Err(e) => return Either::A(err(error::ErrorInternalServerError(e))),
@@ -25,13 +33,9 @@ pub fn save_file(field: Field) -> impl Future<Item = i64, Error = Error> {
     Either::B(
         field
             .fold((file, 0i64), move |(mut file, mut acc), bytes| {
-                // fs operations are blocking, we have to execute writes
-                // on threadpool
                 web::block(move || {
-                    file.write_all(bytes.as_ref()).map_err(|e| {
-                        println!("file.write_all failed: {:?}", e);
-                        MultipartError::Payload(error::PayloadError::Io(e))
-                    })?;
+                    file.write_all(bytes.as_ref())
+                        .map_err(|e| MultipartError::Payload(error::PayloadError::Io(e)))?;
                     acc += bytes.len() as i64;
                     Ok((file, acc))
                 })
@@ -59,10 +63,4 @@ pub fn upload(
         .collect()
         .map(|sizes| HttpResponse::Ok().json(sizes))
         .from_err()
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_index() {}
 }

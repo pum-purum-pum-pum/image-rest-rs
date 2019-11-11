@@ -6,6 +6,7 @@ use actix_web::{middleware, web, App, HttpResponse, HttpServer};
 use image_preview_request::image_preview;
 use json_request::image_json_save;
 use multipart_request::upload;
+use serde_derive::{Deserialize, Serialize};
 use url_request::image_url_save;
 
 mod err;
@@ -19,6 +20,11 @@ mod url_request;
 pub const MAX_SIZE: usize = 262_144; // max payload size is 256k
 pub const MAX_IMAGE_SIZE: usize = 2 * 1024 * 1024;
 
+#[derive(Deserialize, Serialize)]
+pub struct UrlFormData {
+    pub url: String,
+}
+
 pub fn index() -> HttpResponse {
     let html = include_str!("multipart.html");
     HttpResponse::Ok().body(html)
@@ -26,6 +32,11 @@ pub fn index() -> HttpResponse {
 
 fn url_form() -> HttpResponse {
     let html = include_str!("upload_url.html");
+    HttpResponse::Ok().body(html)
+}
+
+fn preview_form() -> HttpResponse {
+    let html = include_str!("preview.html");
     HttpResponse::Ok().body(html)
 }
 
@@ -50,7 +61,11 @@ fn main() -> std::io::Result<()> {
                     .route(web::get().to(url_form))
                     .route(web::post().to_async(image_url_save)),
             )
-            .service(web::resource("/image_preivew").route(web::get().to_async(image_preview)))
+            .service(
+                web::resource("/image_preview")
+                    .route(web::get().to(preview_form))
+                    .route(web::post().to_async(image_preview)),
+            )
     })
     .bind(format!("127.0.0.1:{}", port))?
     .run()

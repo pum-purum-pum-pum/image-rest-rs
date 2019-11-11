@@ -11,6 +11,7 @@ use uuid::Uuid;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ImageBase64 {
     pub content: String,
+    pub extension: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -29,7 +30,8 @@ pub fn image_json_save(payload: web::Payload) -> impl Future<Item = HttpResponse
             web::block(move || {
                 let obj = serde_json::from_slice::<ImageBase64>(&body)?;
                 let bytes = base64::decode(&obj.content).map_err(ImageProcessError::DecodeError)?;
-                let file_name = format!("{}.png", Uuid::new_v4());
+                let extension = obj.extension;
+                let file_name = format!("{}.{}", Uuid::new_v4(), extension);
                 let path = Path::new(&file_name);
                 load_from_memory(&bytes)
                     .map_err(ImageProcessError::ImageError)
