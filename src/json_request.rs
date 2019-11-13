@@ -14,7 +14,10 @@ pub struct ImageBase64 {
     pub extension: String,
 }
 
-pub fn image_json_save(payload: web::Payload) -> impl Future<Item = HttpResponse, Error = Error> {
+pub fn image_json_save(
+    payload: web::Payload,
+    save_dir: web::Data<String>,
+) -> impl Future<Item = HttpResponse, Error = Error> {
     // payload is a stream of Bytes objects
     payload
         .from_err()
@@ -25,8 +28,14 @@ pub fn image_json_save(payload: web::Payload) -> impl Future<Item = HttpResponse
                 let obj = serde_json::from_slice::<ImageBase64>(&body)?;
                 let bytes = base64::decode(&obj.content).map_err(ImageProcessError::DecodeError)?;
                 let extension = obj.extension;
-                let file_name = format!("{}.{}", Uuid::new_v4(), extension);
-                let preview_file_name = format!("preview_{}.{}", Uuid::new_v4(), extension);
+                let file_name =
+                    format!("{}/{}.{}", save_dir.to_string(), Uuid::new_v4(), extension);
+                let preview_file_name = format!(
+                    "{}/preview{}.{}",
+                    save_dir.to_string(),
+                    Uuid::new_v4(),
+                    extension
+                );
                 let path = Path::new(&file_name);
                 let preview_path = Path::new(&preview_file_name);
                 let img = load_from_memory(&bytes).map_err(ImageProcessError::ImageError);

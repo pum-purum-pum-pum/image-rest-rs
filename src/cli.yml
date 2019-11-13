@@ -3,8 +3,13 @@ version: "1.0"
 author: Vlad Zhukov
 about: REST API for uploading images
 args:
-    - config:
+    - port:
         short: p
         long: port
         help: Sets port number
+        takes_value: true
+    - out:
+        short: o
+        long: out
+        help: Sets output directory
         takes_value: true

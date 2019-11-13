@@ -7,6 +7,7 @@ use image::{self};
 use serde_derive::{Deserialize, Serialize};
 use std::fs;
 use std::io::BufReader;
+use std::io::{Error as IoError, ErrorKind};
 use std::path::Path;
 
 #[derive(Deserialize, Serialize)]
@@ -16,9 +17,23 @@ pub struct FileNameFormData {
 
 pub fn image_preview(
     param: web::Form<FileNameFormData>,
+    save_dir: web::Data<String>,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     web::block(move || {
-        let path = Path::new(&param.name);
+        let in_path = Path::new(&param.name);
+        let file_name_error = IoError::new(ErrorKind::Other, "file name error");
+        let invalid_char = IoError::new(ErrorKind::Other, "invalied character in filename");
+        // for safety convert input to filename
+        let image_path = format!(
+            "{}/{}",
+            save_dir.to_string(),
+            in_path
+                .file_name()
+                .ok_or(file_name_error)?
+                .to_str()
+                .ok_or(invalid_char)?
+        );
+        let path = Path::new(&image_path);
         let image_format = ImageFormat::from_path(path)?;
         let img = image::load(BufReader::new(fs::File::open(path)?), image_format);
         img.and_then(|img| {

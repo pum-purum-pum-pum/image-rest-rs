@@ -2,6 +2,7 @@ use crate::err::SavingMultipartError;
 use crate::misc::mini_from_buf;
 use crate::misc::JsonImageResponse;
 use actix_multipart::{Field, Multipart, MultipartError};
+use actix_web::web::Data;
 use actix_web::{error, web, Error, HttpResponse};
 use futures::future::{err, Either};
 use futures::{Future, Stream};
@@ -13,9 +14,12 @@ use std::path::Path;
 use uuid::Uuid;
 
 /// upload multipart data and responce with a future stream of sizes
-pub fn upload(multipart: Multipart) -> impl Future<Item = HttpResponse, Error = Error> {
+pub fn upload(
+    multipart: Multipart,
+    save_dir: Data<String>,
+) -> impl Future<Item = HttpResponse, Error = Error> {
     multipart
-        .map(|field| save_file(field).into_stream())
+        .map(move |field| save_file(field, save_dir.to_string()).into_stream())
         .flatten()
         .collect()
         .map(|responces| HttpResponse::Ok().json(responces.iter().collect::<Vec<_>>()))
@@ -42,16 +46,18 @@ fn blocking_savemultipart_convert(
 }
 
 /// create and save mini preview image
-fn save_mini(filename: &str, image_buffer: Vec<u8>) -> Result<(), SavingMultipartError> {
+fn save_mini(file_path: &str, image_buffer: Vec<u8>) -> Result<(), SavingMultipartError> {
     let format = guess_format(&image_buffer).unwrap_or(ImageFormat::PNG);
     let mini_image = mini_from_buf(&image_buffer, format).map_err(SavingMultipartError::Image);
-    let mini_filename = format!("preview_{}", filename);
-    let path = Path::new(&mini_filename);
+    let path = Path::new(&file_path);
     mini_image.and_then(|image| image.save(path).map_err(SavingMultipartError::Io))?;
     Ok(())
 }
 
-pub fn save_file(field: Field) -> impl Future<Item = JsonImageResponse, Error = Error> {
+pub fn save_file(
+    field: Field,
+    save_dir: String,
+) -> impl Future<Item = JsonImageResponse, Error = Error> {
     let extension = match field
         .content_disposition()
         .and_then(|content| content.get_filename().map(|s| s.to_string()))
@@ -68,8 +74,9 @@ pub fn save_file(field: Field) -> impl Future<Item = JsonImageResponse, Error = 
         }
     };
     let image_buffer = vec![];
-    let file_path_string = format!("{}.{}", Uuid::new_v4(), extension);
-    let file = match fs::File::create(file_path_string.clone()) {
+    let file_path_string = format!("{}/{}.{}", save_dir, Uuid::new_v4(), extension);
+    let mini_file_path = format!("{}/preview{}.{}", save_dir, Uuid::new_v4(), extension);
+    let file = match fs::create_dir_all(save_dir).and(fs::File::create(file_path_string.clone())) {
         Ok(file) => file,
         Err(e) => return Either::A(err(error::ErrorInternalServerError(e))),
     };
@@ -93,7 +100,7 @@ pub fn save_file(field: Field) -> impl Future<Item = JsonImageResponse, Error = 
             .from_err()
             .and_then(|(_file, filename, image_buffer, acc)| {
                 web::block(move || {
-                    save_mini(&filename, image_buffer)?;
+                    save_mini(&mini_file_path, image_buffer)?;
                     Ok(JsonImageResponse {
                         name: filename,
                         checksum: acc,

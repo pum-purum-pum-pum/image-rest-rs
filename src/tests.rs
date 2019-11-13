@@ -2,12 +2,11 @@ use crate::image_preview_request::image_preview;
 use crate::image_preview_request::FileNameFormData;
 use crate::json_request::{image_json_save, ImageBase64};
 use crate::misc::JsonImageResponse;
-use crate::multipart_request::upload;
 use crate::{index, url_form};
 use actix_web::http::StatusCode;
 use actix_web::{http::header, test, web, App};
 use bytes::Bytes;
-use image::{self, load_from_memory, ImageFormat};
+use image::{self, load_from_memory};
 use once_cell::sync::Lazy;
 use std::fs;
 use std::io::BufReader;
@@ -43,10 +42,16 @@ fn url_page() {
     assert_eq!(resp.status(), StatusCode::OK);
 }
 
+// TODO: 
+// * test multipart request(with Multipart as payload. 
+//      Seems like actix_web does not provide convinient method for constracting multipart data with proper boundaryes 
+// * test url requst
+
 #[test]
 fn json_request() {
     let mut app = test::init_service(
         App::new()
+            .data("images".to_string())
             .service(web::resource("/image_json").route(web::post().to_async(image_json_save))),
     );
     let req = test::TestRequest::post()
@@ -63,13 +68,14 @@ fn json_request() {
 fn preview_test() {
     let mut app = test::init_service(
         App::new()
-            .service(web::resource("/image_preivew").route(web::post().to_async(image_preview))),
+            .data("images".to_string())
+            .service(web::resource("/image_preview").route(web::post().to_async(image_preview))),
     );
     let form = FileNameFormData {
-        name: "test.png".to_string(),
+        name: "images/test.png".to_string(),
     };
     let req = test::TestRequest::post()
-        .uri("/image_preivew")
+        .uri("/image_preview")
         .header(header::CONTENT_TYPE, "multipart/form-data")
         .set_form(&form)
         .to_request();
