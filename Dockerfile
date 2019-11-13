@@ -14,4 +14,4 @@ RUN apt-get update && \
 COPY --from=build /app/build/target/release/image_rest /usr/local/bin/
 EXPOSE 8000
 RUN export RUST_BACKTRACE=1
-ENTRYPOINT ["image_rest"]
+ENTRYPOINT ["image_rest", "--out=/var/lib/image-rest/images"]

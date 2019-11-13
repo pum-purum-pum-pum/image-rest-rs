@@ -77,7 +77,7 @@ pub fn save_file(
     let image_buffer = vec![];
     let file_path_string = format!("{}/{}.{}", save_dir, Uuid::new_v4(), extension);
     let mini_file_path = format!("{}/preview{}.{}", save_dir, Uuid::new_v4(), extension);
-    let file = match fs::create_dir_all(save_dir).and(fs::File::create(file_path_string.clone())) {
+    let file = match fs::File::create(file_path_string.clone()) {
         Ok(file) => file,
         Err(e) => return Either::A(err(error::ErrorInternalServerError(e))),
     };

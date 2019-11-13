@@ -49,11 +49,13 @@ fn url_page() {
 
 #[test]
 fn json_request() {
+    let save_dir = "images";
     let mut app = test::init_service(
         App::new()
-            .data("images".to_string())
+            .data(save_dir.to_string())
             .service(web::resource("/image_json").route(web::post().to_async(image_json_save))),
     );
+    fs::create_dir_all(save_dir.to_string()).unwrap();
     let req = test::TestRequest::post()
         .uri("/image_json")
         .header(header::CONTENT_TYPE, "application/json")
@@ -66,11 +68,13 @@ fn json_request() {
 
 #[test]
 fn preview_test() {
+    let save_dir = "images";
     let mut app = test::init_service(
         App::new()
-            .data("images".to_string())
+            .data(save_dir.to_string())
             .service(web::resource("/image_preview").route(web::post().to_async(image_preview))),
     );
+    fs::create_dir_all(save_dir.to_string()).unwrap();
     let form = FileNameFormData {
         name: "images/test.png".to_string(),
     };

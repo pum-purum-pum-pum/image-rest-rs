@@ -6,6 +6,7 @@ use json_request::image_json_save;
 use multipart_request::upload;
 use url_request::image_url_save;
 use misc::{index, url_form, preview_form};
+use std::fs;
 
 mod err;
 mod image_preview_request;
@@ -26,6 +27,7 @@ fn main() -> std::io::Result<()> {
     let matches = Clapp::from_yaml(yaml).get_matches();
     let port = matches.value_of("port").unwrap_or("8000");
     let save_dir = matches.value_of("out").unwrap_or("images").to_string();
+    fs::create_dir_all(save_dir.clone())?;
     HttpServer::new(move || {
         App::new()
             .data(save_dir.clone())
