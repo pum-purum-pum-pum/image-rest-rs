@@ -6,7 +6,8 @@ use actix_web::client::{Client, SendRequestError};
 use actix_web::error::{ErrorBadGateway, ErrorInternalServerError};
 
 use crate::err::ImageProcessError;
-use crate::{UrlFormData, MAX_IMAGE_SIZE};
+use crate::misc::UrlFormData;
+use crate::MAX_IMAGE_SIZE;
 use futures::Future;
 use image::{self, load_from_memory};
 use std::ffi::OsStr;

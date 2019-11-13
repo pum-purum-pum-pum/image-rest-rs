@@ -3,16 +3,15 @@ use clap::{load_yaml, App as Clapp};
 use std::cell::Cell;
 
 use actix_web::{middleware, web, App, HttpResponse, HttpServer};
-use image::GenericImageView;
 use image_preview_request::image_preview;
 use json_request::image_json_save;
 use multipart_request::upload;
-use serde_derive::{Deserialize, Serialize};
 use url_request::image_url_save;
 
 mod err;
 mod image_preview_request;
 mod json_request;
+mod misc;
 mod multipart_request;
 #[cfg(test)]
 mod tests;
@@ -21,32 +20,6 @@ mod url_request;
 pub const MAX_SIZE: usize = 262_144; // max payload size is 256k
 pub const MAX_IMAGE_SIZE: usize = 2 * 1024 * 1024;
 pub const MINI_IMAGE_DIM: u32 = 100;
-
-#[derive(Deserialize, Serialize)]
-pub struct UrlFormData {
-    pub url: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct JsonImageResponse {
-    pub name: String,
-    pub checksum: u64,
-}
-
-pub fn minimize_image(image: &DynamicImage) -> ImageResult<DynamicImage> {
-    let dimensions = image.dimensions();
-    if dimensions.0 < MINI_IMAGE_DIM && dimensions.0 < MINI_IMAGE_DIM {
-        return Ok(image.clone());
-    }
-    let image = image.resize(MINI_IMAGE_DIM, MINI_IMAGE_DIM, FilterType::Triangle);
-    Ok(image)
-}
-
-use image::{load_from_memory_with_format, DynamicImage, FilterType, ImageFormat, ImageResult};
-pub fn mini_from_buf(buf: &[u8], format: ImageFormat) -> ImageResult<DynamicImage> {
-    let image = load_from_memory_with_format(buf, format)?;
-    minimize_image(&image)
-}
 
 pub fn index() -> HttpResponse {
     let html = include_str!("../html/multipart.html");

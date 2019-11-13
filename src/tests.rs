@@ -1,11 +1,13 @@
 use crate::image_preview_request::image_preview;
 use crate::image_preview_request::FileNameFormData;
 use crate::json_request::{image_json_save, ImageBase64};
-use crate::{index, url_form, JsonImageResponse};
+use crate::misc::JsonImageResponse;
+use crate::multipart_request::upload;
+use crate::{index, url_form};
 use actix_web::http::StatusCode;
 use actix_web::{http::header, test, web, App};
 use bytes::Bytes;
-use image::{self, load_from_memory};
+use image::{self, load_from_memory, ImageFormat};
 use once_cell::sync::Lazy;
 use std::fs;
 use std::io::BufReader;

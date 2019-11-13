@@ -16,6 +16,7 @@ pub enum ImageProcessError {
     JsonError(JsonError),
 }
 
+/// SavingMultipartError -- enum with common errors appears in save_file function
 #[derive(Debug)]
 pub enum SavingMultipartError {
     Multipart(MultipartError),
@@ -25,7 +26,6 @@ pub enum SavingMultipartError {
 
 impl fmt::Display for SavingMultipartError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // Customize so only `x` and `y` are denoted.
         write!(f, "{:?}", self)
     }
 }

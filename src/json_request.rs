@@ -2,7 +2,7 @@ use actix_web::{web, Error, HttpResponse};
 use std::path::Path;
 
 use crate::err::ImageProcessError;
-use crate::{minimize_image, JsonImageResponse};
+use crate::misc::{minimize_image, JsonImageResponse};
 use futures::{Future, Stream};
 use image::{self, load_from_memory};
 use serde_derive::{Deserialize, Serialize};
@@ -32,7 +32,7 @@ pub fn image_json_save(payload: web::Payload) -> impl Future<Item = HttpResponse
                 let img = load_from_memory(&bytes).map_err(ImageProcessError::ImageError);
                 img.and_then(|img| {
                     minimize_image(&img)
-                        .map_err(|e| ImageProcessError::ImageError(e))
+                        .map_err(ImageProcessError::ImageError)
                         .and_then(|mini_img| {
                             mini_img
                                 .save(preview_path)
