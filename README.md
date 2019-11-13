@@ -1,4 +1,4 @@
-# image-rest-rs
+# Image-rest-rs
 Rust REST server for uploading images
 # Run
 ## Native

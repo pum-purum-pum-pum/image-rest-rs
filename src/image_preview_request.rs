@@ -23,7 +23,7 @@ pub fn image_preview(
         let in_path = Path::new(&param.name);
         let file_name_error = IoError::new(ErrorKind::Other, "file name error");
         let invalid_char = IoError::new(ErrorKind::Other, "invalied character in filename");
-        // for safety convert input to filename
+        // for safety(kind of) convert input to filename
         let image_path = format!(
             "{}/{}",
             save_dir.to_string(),

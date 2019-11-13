@@ -97,8 +97,8 @@ pub fn save_file(
                     .map_err(blocking_multipart_convert)
                 },
             )
-            // using this error type as enum of multipart and image processing errors
             .from_err()
+            // saving mini image preview
             .and_then(|(_file, filename, image_buffer, acc)| {
                 web::block(move || {
                     save_mini(&mini_file_path, image_buffer)?;

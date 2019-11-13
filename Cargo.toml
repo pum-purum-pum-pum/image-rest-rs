@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 actix = "0.8"
-actix-web = {version="1.0.0-beta", features=["ssl"]}
+actix-web = {version="1.0.8"}
 actix-multipart = "0.1.1"
 
 env_logger = "0.6"

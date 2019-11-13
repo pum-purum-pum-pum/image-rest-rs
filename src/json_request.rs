@@ -14,6 +14,12 @@ pub struct ImageBase64 {
     pub extension: String,
 }
 
+pub fn check_extension(extension: &str) -> bool {
+    let allowed = ["png", "jpg"];
+    allowed.contains(&extension)
+}
+
+/// for this code sample we only support png and jpg
 pub fn image_json_save(
     payload: web::Payload,
     save_dir: web::Data<String>,
@@ -27,11 +33,16 @@ pub fn image_json_save(
             web::block(move || {
                 let obj = serde_json::from_slice::<ImageBase64>(&body)?;
                 let bytes = base64::decode(&obj.content).map_err(ImageProcessError::DecodeError)?;
-                let extension = obj.extension;
+                let extension = 
+                    if check_extension(&obj.extension) {
+                        obj.extension
+                    } else {
+                        "png".to_string() // TODO return error
+                    };
                 let file_name =
                     format!("{}/{}.{}", save_dir.to_string(), Uuid::new_v4(), extension);
                 let preview_file_name = format!(
-                    "{}/preview{}.{}",
+                    "{}/preview_{}.{}",
                     save_dir.to_string(),
                     Uuid::new_v4(),
                     extension
