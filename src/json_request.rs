@@ -14,12 +14,12 @@ pub struct ImageBase64 {
     pub extension: String,
 }
 
+/// for this code sample we only support png and jpg
 pub fn check_extension(extension: &str) -> bool {
     let allowed = ["png", "jpg"];
     allowed.contains(&extension)
 }
 
-/// for this code sample we only support png and jpg
 pub fn image_json_save(
     payload: web::Payload,
     save_dir: web::Data<String>,
@@ -39,6 +39,7 @@ pub fn image_json_save(
                     } else {
                         "png".to_string() // TODO return error
                     };
+                // we loose filename for simplicity of the code sample (while it's possible to store it in db along with other metadata)
                 let file_name =
                     format!("{}/{}.{}", save_dir.to_string(), Uuid::new_v4(), extension);
                 let preview_file_name = format!(

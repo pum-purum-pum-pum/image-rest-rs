@@ -5,8 +5,8 @@ Rust REST server for uploading images
 ```cargo run --release --p <PORT> --o <OUTPUT_DIRECTORY>``` (see cli.yml for details)
 ## With docker
 Create docker image:
-```sudo docker image build -t image_rest .```
+```docker image build -t image_rest .```
 Run docker image:
-```sudo docker run image_rest -p 8000:8000```
+```docker run -p 8000:8000 image_rest:latest```
 ## With docker compose
-```sudo docker-compose up```
+```docker-compose up```

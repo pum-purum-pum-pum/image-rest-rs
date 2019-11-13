@@ -11,7 +11,7 @@ RUN apt-get update && \
     apt-get install -y \
     libssl-dev \
     ca-certificates
-RUN groupadd -r sample && useradd -r -g sample sample
-USER sample
 COPY --from=build /app/build/target/release/image_rest /usr/local/bin/
+EXPOSE 8000
+RUN export RUST_BACKTRACE=1
 ENTRYPOINT ["image_rest"]
