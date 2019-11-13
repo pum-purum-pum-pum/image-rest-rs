@@ -6,7 +6,7 @@ COPY . .
 
 RUN cargo build --release
 
-FROM ubuntu:latest
+FROM ubuntu:18.04
 RUN apt-get update && \
     apt-get install -y \
     libssl-dev \

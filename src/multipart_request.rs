@@ -27,6 +27,7 @@ pub fn upload(
 }
 
 // error conversion functions
+
 fn blocking_multipart_convert(e: error::BlockingError<MultipartError>) -> MultipartError {
     match e {
         error::BlockingError::Error(e) => e,

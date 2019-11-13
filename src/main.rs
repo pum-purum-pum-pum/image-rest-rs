@@ -29,7 +29,6 @@ fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .data(save_dir.clone())
-            // .data(Cell::new(0usize))
             .wrap(middleware::Logger::default())
             .service(
                 web::resource("/")
