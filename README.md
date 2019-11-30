@@ -1,5 +1,5 @@
 # Image-rest-rs
-Rust REST server for uploading images
+Rust toy REST server example for uploading images
 # Run
 ## Native
 ```cargo run --release --p <PORT> --o <OUTPUT_DIRECTORY>``` (see cli.yml for details)
